@@ -26,43 +26,25 @@ namespace JetstyleTest
     /// </summary>
     public partial class MainWindow : Window
     {
-        AutomationEventHandler UIAeventHandler;
+        private string appName = "notepad";
 
         public MainWindow()
         {
             InitializeComponent();
-
-            var notepadWindow = AutomationElement.FromLocalProvider(AutomationInteropProvider.HostProviderFromHandle(Process.GetProcessesByName("notepad").First().MainWindowHandle));
-            var menuItemCondition = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.MenuItem);
 
             AppDomain.CurrentDomain.FirstChanceException += (sender, eventArgs) =>
             {
                 Debug.WriteLine(eventArgs.Exception.ToString());
             };
 
-            var elements = notepadWindow.FindAll(TreeScope.Descendants, menuItemCondition);
-            var helpElement = elements[elements.Count - 1];
-
-            var expandPattern = helpElement.GetCurrentPattern(ExpandCollapsePattern.Pattern) as ExpandCollapsePattern;
-            expandPattern.Expand();
+            var notepadWindow = AutomationElement.FromHandle(Process.GetProcessesByName(appName).First().Handle);     
 
             Automation.AddAutomationFocusChangedEventHandler((o, e) => {
-                Console.WriteLine((o as AutomationElement).Current.Name);
+                var element = o as AutomationElement;
+                
+                if (element != null)
+                    Console.WriteLine("name is {0}", element.Current.Name);                  
             });
-
-            Automation.AddAutomationEventHandler(AutomationElement.MenuOpenedEvent, helpElement, TreeScope.Element, (o, e) => {
-                Console.WriteLine("debug");
-            });
-
-            Console.WriteLine();
-
-            //Automation.AddAutomationEventHandler(SelectionItemPattern.ElementSelectedEvent,
-            //       elementItem, TreeScope.Element,
-            //       new AutomationEventHandler(OnUIAutomationEvent));
-
-            //Automation.AddAutomationEventHandler(InvokePattern.InvokedEvent,
-            //    element, 
-            //    TreeScope.Element, OnNotepadControlAction);
         }
 
         private static AutomationPattern GetSpecifiedPattern(AutomationElement element, string patternName)
