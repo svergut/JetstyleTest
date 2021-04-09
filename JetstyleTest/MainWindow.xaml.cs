@@ -1,23 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Automation;
-using System.Windows.Automation.Provider;
 using System.Diagnostics;
-using System.Windows.Automation.Peers;
-using System.Threading;
-using System.Windows.Interop;
+using System.Speech.Synthesis;
 
 namespace JetstyleTest
 {
@@ -27,6 +13,8 @@ namespace JetstyleTest
     public partial class MainWindow : Window
     {
         private string appName = "notepad";
+        delegate void NotepadLaunchHandler(Process process);
+        event NotepadLaunchHandler NotepadLaunched;
 
         public MainWindow()
         {
@@ -37,86 +25,72 @@ namespace JetstyleTest
                 Debug.WriteLine(eventArgs.Exception.ToString());
             };
 
-            var notepadWindow = AutomationElement.FromHandle(Process.GetProcessesByName(appName).First().Handle);     
+            StartListeningForNotepadLaunch(1000);
 
             Automation.AddAutomationFocusChangedEventHandler((o, e) => {
-                var element = o as AutomationElement;
-                
-                if (element != null)
-                    Console.WriteLine("name is {0}", element.Current.Name);                  
+                Console.WriteLine((o as AutomationElement).Current.Name);
+                Console.WriteLine(e.EventId);
             });
-        }
 
-        private static AutomationPattern GetSpecifiedPattern(AutomationElement element, string patternName)
-        {
-            AutomationPattern[] supportedPattern = element.GetSupportedPatterns();
-
-            foreach (AutomationPattern pattern in supportedPattern)
+            NotepadLaunched += (process) =>
             {
-                if (pattern.ProgrammaticName == patternName)
-                    return pattern;
-            }
+                var notepadProcess = Process.GetProcessesByName(appName).First();
+                var notepadWindow = AutomationElement.FromHandle(notepadProcess.Handle);
 
-            return null;
-        }
+                //Automation.AddAutomationEventHandler(AutomationElementIdentifiers.ToolTipOpenedEvent, notepadWindow, TreeScope.Element, (o, e) => {
+                //    Console.WriteLine(e.EventId);
+                //});
 
-        private void OnNotepadControlAction(object sender, AutomationEventArgs automationEventArgs)
-        {
-            var spacing = "   ";
-            var rootElement = sender as AutomationElement;
-            
-            Console.WriteLine(rootElement.Current.ClassName);
-            
-            Automation.AddAutomationEventHandler(SelectionItemPattern.ElementSelectedEvent,
-                   rootElement.GetUpdatedCache(CacheRequest.Current), TreeScope.Children,
-                   new AutomationEventHandler(OnUIAutomationEvent));
-            
-            var children = rootElement.FindAll(TreeScope.Children, System.Windows.Automation.Condition.TrueCondition);
-            
-            foreach (AutomationElement child in children)
-            {
-                var childrenSpacing = spacing + "   ";
-            
-                Console.WriteLine(childrenSpacing + child.Current.ClassName);
-            
-                var ch = child.FindAll(TreeScope.Children, System.Windows.Automation.Condition.TrueCondition);
-            
-                foreach (AutomationElement c in ch)
-                {
-                    Console.WriteLine(childrenSpacing + c.Current.Name);
-                    Automation.AddAutomationEventHandler(TextPattern.TextChangedEvent, c.GetUpdatedCache(CacheRequest.Current), TreeScope.Descendants,
-                    new AutomationEventHandler(OnUIAutomationEvent));
-                }
+                //fetch all children then compare
+
+                var speechSynthesizer = new SpeechSynthesizer();
+
+                Automation.AddAutomationFocusChangedEventHandler((o, e) => {
+                    Console.WriteLine((o as AutomationElement).Current.BoundingRectangle + " " + (o as AutomationElement).Current.Name);
                     
+
+                    var currentProcess = Process.GetCurrentProcess();
+
+                   
+                    if (currentProcess.ProcessName == notepadProcess.ProcessName)
+                    {
+                        var element = o as AutomationElement;
+
+                        if (element != null)
+                        {
+                            speechSynthesizer.SpeakAsyncCancelAll();
+                            speechSynthesizer.Speak(new Prompt(element.Current.Name));
+                        }
+                    }
+
+                    
+                        
+                });
+            };
+
             
-            }
-        }
+        }  
+        
+        private void StartListeningForNotepadLaunch(double interval)
+        {
+            var timer = new System.Timers.Timer(interval);
+            timer.Start();
 
-       
-
-        private void OnUIAutomationEvent(object src, AutomationEventArgs e)
+            timer.Elapsed += (i, a) =>
             {
-            Console.WriteLine(e.EventId);
-                // Make sure the element still exists. Elements such as tooltips
-                // can disappear before the event is processed.
-                AutomationElement sourceElement;
-                try
-                {
-                    sourceElement = src as AutomationElement;
-                }
-                catch (ElementNotAvailableException)
-                {
-                    return;
-                }
-                if (e.EventId == InvokePattern.InvokedEvent)
-                {
-                    // TODO Add handling code.
-                }
-                else
-                {
-                    // TODO Handle any other events that have been subscribed to.
-                }
-            }
+                var processes = Process.GetProcessesByName(appName);
 
+                if (processes.Length > 0)
+                {
+                    var notepadProcess = processes.First();
+
+                    NotepadLaunched?.Invoke(notepadProcess);
+
+                    timer.Stop();
+                }
+            };
         }
+
+    
+    }
 }
