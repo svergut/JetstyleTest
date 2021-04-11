@@ -7,6 +7,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        
+        <ListBox x:Name="MenuHoverHistoryList" ItemsSource="{Binding Path=Items}"></ListBox>
+        <TextBlock x:Name="FocusAppName" FontSize="30"></TextBlock>
     </Grid>
 </Window>

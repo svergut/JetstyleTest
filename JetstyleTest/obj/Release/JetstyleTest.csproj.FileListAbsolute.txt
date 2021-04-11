@@ -1,0 +1,15 @@
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\bin\Release\JetstyleTest.exe.config
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\bin\Release\JetstyleTest.exe
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\bin\Release\JetstyleTest.pdb
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\JetstyleTest.csprojAssemblyReference.cache
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\MainWindow.g.cs
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\App.g.cs
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\JetstyleTest_MarkupCompile.cache
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\JetstyleTest_MarkupCompile.lref
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\MainWindow.baml
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\JetstyleTest.g.resources
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\JetstyleTest.Properties.Resources.resources
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\JetstyleTest.csproj.GenerateResource.cache
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\JetstyleTest.csproj.CoreCompileInputs.cache
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\JetstyleTest.exe
+D:\temp\JetstyleTest\JetstyleTest\JetstyleTest\obj\Release\JetstyleTest.pdb
