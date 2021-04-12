@@ -19,6 +19,9 @@ namespace JetstyleTest
         private AutomationElement focusedWindow;
         public ObservableCollection<string> Items { get; set; }
 
+       
+
+        //mousehook causes perf problems
         public MainWindow()
         {
             InitializeComponent();
@@ -26,25 +29,24 @@ namespace JetstyleTest
             Items = new ObservableCollection<string>();
             MenuHoverHistoryList.ItemsSource = Items;
 
+            Closed += (o, e) =>
+            {
+                UnhookWindowsHookEx(hookId);
+            };
 
-            var thread = new Thread(HookHandler);
-
-            thread.Start();
-
-
+            CreateMouseHook();
             Automation.AddAutomationFocusChangedEventHandler(OnFocusChanged);
         }
 
-        private void HookHandler()
+        private void CreateMouseHook()
         {
-            hookId = SetHook(mouseProcess);
+            mouseProcess = HookCallback;
+            hookId =
+                SetHook(mouseProcess);
         }
 
         private void OnMousePositionChanged(Point point)
         { 
-            //var speechSynthesizer = new SpeechSynthesizer();
-            //speechSynthesizer.Rate = 5;
-
             try
             {
                 var element = AutomationElement.FromPoint(point);
@@ -75,6 +77,7 @@ namespace JetstyleTest
             try
             {
                 var focusedElement = sender as AutomationElement;
+              
                 var parentWindow = AutomationHelper.GetParentWindow(focusedElement);
 
                 if (parentWindow != focusedWindow)
@@ -85,39 +88,8 @@ namespace JetstyleTest
                         new Thread(() => { MousePositionChanged += OnMousePositionChanged; }).Start();
                     else
                         new Thread(() => { MousePositionChanged -= OnMousePositionChanged; }).Start();
+
                 }
-
-                if (focusedWindow != null && AutomationHelper.UIAelementIsRequiredProcessWindow(focusedWindow, appName))
-                {
-                    var treeWalker = TreeWalker.ControlViewWalker;
-                    AutomationElement menuBar = null;
-
-                    var nextChild = treeWalker.GetFirstChild(focusedWindow);                    
-                    
-                    while (nextChild != null)
-                    {
-                        if (nextChild.Current.AutomationId == "MenuBar")
-                        {
-                            menuBar = nextChild;
-                            break;
-                        }
-                            
-
-                        nextChild = treeWalker.GetNextSibling(nextChild);
-                    }
-
-                    var children = new List<string>();
-
-                    nextChild = treeWalker.GetFirstChild(menuBar);
-
-                    while (nextChild != null) {
-                        children.Add(nextChild.Current.Name);
-
-                        nextChild = treeWalker.GetNextSibling(nextChild);
-                    }
-                }
-
-
             }
             catch (ElementNotAvailableException) { }
         }

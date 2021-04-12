@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace JetstyleTest
 {
     public partial class MainWindow
     {
-        private static readonly LowLevelMouseProc mouseProcess = HookCallback;
+        private static LowLevelMouseProc mouseProcess = HookCallback;
         private static IntPtr hookId = IntPtr.Zero;
         private const int WH_MOUSE_LL = 14;
 
@@ -29,7 +31,7 @@ namespace JetstyleTest
         {
             using (Process currentProcess = Process.GetCurrentProcess())
             using (ProcessModule currentModule = currentProcess.MainModule)
-            {
+            {                
                 return SetWindowsHookEx(WH_MOUSE_LL, proc,
                     GetModuleHandle(currentModule.ModuleName), 0);
             }
@@ -45,9 +47,6 @@ namespace JetstyleTest
                 var hookStruct = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
 
                 MousePositionChanged?.Invoke(new Point(hookStruct.pt.x, hookStruct.pt.y));
-                //UnhookWindowsHookEx(hookId);
-                
-                //hookId = SetHook(mouseProcess);
             }
 
             return CallNextHookEx(hookId, nCode, wParam, lParam);

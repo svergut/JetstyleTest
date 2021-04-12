@@ -10,13 +10,19 @@ namespace JetstyleTest
 {
     public class AutomationHelper
     {
+        
+
         public static bool UIAelementIsRequiredProcessWindow(AutomationElement uiaElement, string processName)
         {
             var uiaElementIsRequiredProcess = false;
             var processesWithGivenName = Process.GetProcessesByName(processName);
 
-            if (processesWithGivenName.Length > 0 && uiaElement.Current.ClassName == "Notepad") //add to variables
-                uiaElementIsRequiredProcess = true;
+            if (uiaElement != null)
+            {
+                if (processesWithGivenName.Length > 0 && uiaElement.Current.ClassName == "Notepad") //add to variables
+                    uiaElementIsRequiredProcess = true;
+            }
+
 
             return uiaElementIsRequiredProcess;
         }
