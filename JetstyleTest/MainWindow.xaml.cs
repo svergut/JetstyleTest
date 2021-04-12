@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Linq;
 using System.Windows;
 using System.Windows.Automation;
 using System.Diagnostics;
 using System.Speech.Synthesis;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Security.Cryptography;
 using System.Collections.ObjectModel;
-using System.Windows.Controls;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace JetstyleTest
 {
@@ -31,28 +26,49 @@ namespace JetstyleTest
             Items = new ObservableCollection<string>();
             MenuHoverHistoryList.ItemsSource = Items;
 
-            hookId = SetHook(mouseProcess);
 
-            MousePositionChanged += (point) =>
-            {
-                try
-                {
-                    var element = AutomationElement.FromPoint(point);
-                    
-                    if (element != null)
-                    {
-                        Console.WriteLine(element.Current.Name);
-                    }
+            var thread = new Thread(HookHandler);
 
-                    element = null;
-                }
-                catch (Exception) { }
-            }; 
+            thread.Start();
 
 
-            //Automation.AddAutomationFocusChangedEventHandler(OnFocusChanged);
+            Automation.AddAutomationFocusChangedEventHandler(OnFocusChanged);
         }
 
+        private void HookHandler()
+        {
+            hookId = SetHook(mouseProcess);
+        }
+
+        private void OnMousePositionChanged(Point point)
+        { 
+            //var speechSynthesizer = new SpeechSynthesizer();
+            //speechSynthesizer.Rate = 5;
+
+            try
+            {
+                var element = AutomationElement.FromPoint(point);
+
+                if (element != null)
+                {
+                    try
+                    {
+                        if (element != null)
+                        {
+                            App.Current.Dispatcher.Invoke(() => { Items.Add(element.Current.Name); });
+                            Console.WriteLine(element.Current.Name);
+                        }
+                    }
+                    catch (ElementNotAvailableException)
+                    {
+                        Console.WriteLine("Automation framework error has occured");
+                    }
+                }
+
+                element = null;
+            }
+            catch (Exception) { }
+        }
         
         private AutomationElement GetParentWindow(AutomationElement element)
         {
@@ -79,7 +95,7 @@ namespace JetstyleTest
                     node = elementParent;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return null;
             }
@@ -97,25 +113,52 @@ namespace JetstyleTest
                 if (parentWindow != focusedWindow)
                 {
                     focusedWindow = parentWindow;
+
+                    //Automation.AddAutomationPropertyChangedEventHandler(focusedElement, TreeScope.Element, (o, ev) => 
+                    //{ 
+                    //    
+                    //    Console.WriteLine(ev.NewValue); 
+                    //}, new AutomationProperty[] { MouseMoveEvent });
+
+                    //if (UIAelementIsRequiredProcessWindow(focusedWindow, appName))
+                    //    MousePositionChanged += OnMousePositionChanged;
+                    //else
+                    //    MousePositionChanged -= OnMousePositionChanged;
                 }
 
-                //TODO: ADD MOUSE MOVE SUPPORT (AUTOMATIONELEMENT.FROMPOINT)
+                if (focusedWindow != null && UIAelementIsRequiredProcessWindow(focusedWindow, appName))
+                {
+                    var treeWalker = TreeWalker.ControlViewWalker;
+                    AutomationElement menuBar = null;
 
-                Automation.AddAutomationEventHandler(AutomationElement.MenuOpenedEvent, 
-                    TreeWalker.ControlViewWalker.Normalize(focusedElement), TreeScope.Element, (o, ev) => {
-                        Console.WriteLine(o);
-                    });
+                    var nextChild = treeWalker.GetFirstChild(focusedWindow);                    
+                    
+                    while (nextChild != null)
+                    {
+                        if (nextChild.Current.AutomationId == "MenuBar")
+                        {
+                            menuBar = nextChild;
+                            break;
+                        }
+                            
 
-                if (UIAelementIsRequiredProcessWindow(focusedWindow, appName))
-                {                    
-                    var patterns = focusedElement.GetSupportedPatterns();
-                    App.Current.Dispatcher.Invoke(() => { Items.Add(focusedElement.Current.Name); });
-                }                    
+                        nextChild = treeWalker.GetNextSibling(nextChild);
+                    }
+
+                    var children = new List<string>();
+
+                    nextChild = treeWalker.GetFirstChild(menuBar);
+
+                    while (nextChild != null) {
+                        children.Add(nextChild.Current.Name);
+
+                        nextChild = treeWalker.GetNextSibling(nextChild);
+                    }
+                }
+
+
             }
-
-            catch (ElementNotAvailableException)
-            {
-            }
+            catch (ElementNotAvailableException) { }
         }
 
         private bool UIAelementIsRequiredProcessWindow(AutomationElement uiaElement, string processName) 
@@ -123,10 +166,8 @@ namespace JetstyleTest
             var uiaElementIsRequiredProcess = false;
             var processesWithGivenName = Process.GetProcessesByName(processName);
 
-            if (processesWithGivenName.Length > 0)
-            {
+            if (processesWithGivenName.Length > 0 && uiaElement.Current.ClassName == "Notepad") //add to variables
                 uiaElementIsRequiredProcess = true;
-            }
 
             return uiaElementIsRequiredProcess;
         }
@@ -142,12 +183,11 @@ namespace JetstyleTest
 
                 if (element != null)
                 {
-
                     speechSynthesizer.SpeakAsyncCancelAll();
                     speechSynthesizer.Speak(new Prompt(element.Current.Name));
                 }
             }
-            catch (ElementNotAvailableException exception)
+            catch (ElementNotAvailableException)
             {
                 Console.WriteLine("Automation framework error has occured");
             }
