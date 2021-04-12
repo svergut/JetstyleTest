@@ -69,64 +69,25 @@ namespace JetstyleTest
             }
             catch (Exception) { }
         }
-        
-        private AutomationElement GetParentWindow(AutomationElement element)
-        {
-            var walker = TreeWalker.ControlViewWalker;
-            AutomationElement elementParent;
-            var node = element;
-
-            try 
-            {
-                if (node == AutomationElement.RootElement)
-                {
-                    return node;
-                }
-                while (true)
-                {
-                    elementParent = walker.GetParent(node);
-
-                    if (elementParent == null)
-                        return null;
-
-                    if (elementParent == AutomationElement.RootElement)
-                        break;
-
-                    node = elementParent;
-                }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
-            return node;
-        }
 
         private void OnFocusChanged(object sender, AutomationFocusChangedEventArgs e)
         {
             try
             {
                 var focusedElement = sender as AutomationElement;
-                var parentWindow = GetParentWindow(focusedElement);
+                var parentWindow = AutomationHelper.GetParentWindow(focusedElement);
 
                 if (parentWindow != focusedWindow)
                 {
                     focusedWindow = parentWindow;
 
-                    //Automation.AddAutomationPropertyChangedEventHandler(focusedElement, TreeScope.Element, (o, ev) => 
-                    //{ 
-                    //    
-                    //    Console.WriteLine(ev.NewValue); 
-                    //}, new AutomationProperty[] { MouseMoveEvent });
-
-                    //if (UIAelementIsRequiredProcessWindow(focusedWindow, appName))
-                    //    MousePositionChanged += OnMousePositionChanged;
-                    //else
-                    //    MousePositionChanged -= OnMousePositionChanged;
+                    if (AutomationHelper.UIAelementIsRequiredProcessWindow(focusedWindow, appName))
+                        new Thread(() => { MousePositionChanged += OnMousePositionChanged; }).Start();
+                    else
+                        new Thread(() => { MousePositionChanged -= OnMousePositionChanged; }).Start();
                 }
 
-                if (focusedWindow != null && UIAelementIsRequiredProcessWindow(focusedWindow, appName))
+                if (focusedWindow != null && AutomationHelper.UIAelementIsRequiredProcessWindow(focusedWindow, appName))
                 {
                     var treeWalker = TreeWalker.ControlViewWalker;
                     AutomationElement menuBar = null;
@@ -159,17 +120,6 @@ namespace JetstyleTest
 
             }
             catch (ElementNotAvailableException) { }
-        }
-
-        private bool UIAelementIsRequiredProcessWindow(AutomationElement uiaElement, string processName) 
-        {
-            var uiaElementIsRequiredProcess = false;
-            var processesWithGivenName = Process.GetProcessesByName(processName);
-
-            if (processesWithGivenName.Length > 0 && uiaElement.Current.ClassName == "Notepad") //add to variables
-                uiaElementIsRequiredProcess = true;
-
-            return uiaElementIsRequiredProcess;
         }
         
         private void HandleAutomationFocusChange(object o, AutomationFocusChangedEventArgs e)
