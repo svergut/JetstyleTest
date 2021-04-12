@@ -8,6 +8,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.Collections.ObjectModel;
+using System.Windows.Controls;
+using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace JetstyleTest
 {
@@ -23,19 +26,34 @@ namespace JetstyleTest
 
         public MainWindow()
         {
-            AppDomain.CurrentDomain.FirstChanceException += (sender, eventArgs) =>
-            {
-                Debug.WriteLine(eventArgs.Exception.ToString());
-            };
-
             InitializeComponent();
             DataContext = this;
             Items = new ObservableCollection<string>();
             MenuHoverHistoryList.ItemsSource = Items;
 
-            Automation.AddAutomationFocusChangedEventHandler(OnFocusChanged);
+            hookId = SetHook(mouseProcess);
+
+            MousePositionChanged += (point) =>
+            {
+                try
+                {
+                    var element = AutomationElement.FromPoint(point);
+                    
+                    if (element != null)
+                    {
+                        Console.WriteLine(element.Current.Name);
+                    }
+
+                    element = null;
+                }
+                catch (Exception) { }
+            }; 
+
+
+            //Automation.AddAutomationFocusChangedEventHandler(OnFocusChanged);
         }
 
+        
         private AutomationElement GetParentWindow(AutomationElement element)
         {
             var walker = TreeWalker.ControlViewWalker;
@@ -78,15 +96,19 @@ namespace JetstyleTest
 
                 if (parentWindow != focusedWindow)
                 {
-                    Console.WriteLine("focus changed");
                     focusedWindow = parentWindow;
                 }
-                       
 
-                Console.WriteLine(UIAelementIsRequiredProcessWindow(focusedWindow, appName));
+                //TODO: ADD MOUSE MOVE SUPPORT (AUTOMATIONELEMENT.FROMPOINT)
+
+                Automation.AddAutomationEventHandler(AutomationElement.MenuOpenedEvent, 
+                    TreeWalker.ControlViewWalker.Normalize(focusedElement), TreeScope.Element, (o, ev) => {
+                        Console.WriteLine(o);
+                    });
 
                 if (UIAelementIsRequiredProcessWindow(focusedWindow, appName))
-                {                   
+                {                    
+                    var patterns = focusedElement.GetSupportedPatterns();
                     App.Current.Dispatcher.Invoke(() => { Items.Add(focusedElement.Current.Name); });
                 }                    
             }
@@ -107,13 +129,6 @@ namespace JetstyleTest
             }
 
             return uiaElementIsRequiredProcess;
-        }
-
-        private void AddFocusChangeListener(object element)
-        {
-            var automationElement = element as AutomationElement;
-
-            Automation.AddAutomationFocusChangedEventHandler(HandleAutomationFocusChange);
         }
         
         private void HandleAutomationFocusChange(object o, AutomationFocusChangedEventArgs e)
