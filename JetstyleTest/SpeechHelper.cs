@@ -14,12 +14,20 @@ namespace JetstyleTest
         public SpeechHelper()
         {
             speechSynthesizer = new SpeechSynthesizer();
-            speechSynthesizer.Rate = 4;
+            speechSynthesizer.Rate = 3;
         }
 
-        void Speak(string text)
+        public void Speak(string text)
         {
+            if (speechSynthesizer.State == SynthesizerState.Speaking)
+                try { speechSynthesizer.SpeakAsyncCancelAll(); }
+                catch (Exception) { }
+
             speechSynthesizer.SpeakAsync(new Prompt(text));
+
+
+
+            //speechSynthesizer.Speak(new Prompt(text));
         }
     }
 }

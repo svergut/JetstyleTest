@@ -6,6 +6,7 @@ using System.Speech.Synthesis;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace JetstyleTest
 {
@@ -14,7 +15,9 @@ namespace JetstyleTest
     /// </summary>
     public partial class MainWindow : Window
     {
+        private SpeechHelper speechHelper = new SpeechHelper();
         private string appName = "notepad";
+        private AutomationElement previouslyFocusedMenuItem;
         delegate void NotepadLaunchHandler(Process process);
         private AutomationElement focusedWindow;
         public ObservableCollection<string> Items { get; set; }
@@ -53,12 +56,15 @@ namespace JetstyleTest
 
                 if (element != null)
                 {
+                    
                     try
                     {
-                        if (element != null)
+                        if (element != null && element != previouslyFocusedMenuItem && focusedWindow.Current.BoundingRectangle.Contains(point))
                         {
                             App.Current.Dispatcher.Invoke(() => { Items.Add(element.Current.Name); });
-                            Console.WriteLine(element.Current.Name);
+                            speechHelper.Speak(element.Current.Name);
+
+                            previouslyFocusedMenuItem = element;
                         }
                     }
                     catch (ElementNotAvailableException)
@@ -85,9 +91,14 @@ namespace JetstyleTest
                     focusedWindow = parentWindow;
 
                     if (AutomationHelper.UIAelementIsRequiredProcessWindow(focusedWindow, appName))
-                        new Thread(() => { MousePositionChanged += OnMousePositionChanged; }).Start();
+                    {                        
+                        MousePositionChanged += OnMousePositionChanged;
+                    }                       
                     else
-                        new Thread(() => { MousePositionChanged -= OnMousePositionChanged; }).Start();
+                    {
+                        MousePositionChanged -= OnMousePositionChanged;
+                    }
+                        
 
                 }
             }
