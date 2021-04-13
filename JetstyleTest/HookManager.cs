@@ -26,6 +26,12 @@ namespace JetstyleTest
             WM_RBUTTONUP = 0x0205
         }
 
+        private void CreateMouseHook()
+        {
+            mouseProcess = HookCallback;
+            hookId =
+                SetHook(mouseProcess);
+        }
 
         private static IntPtr SetHook(LowLevelMouseProc proc)
         {

@@ -7,9 +7,16 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition></ColumnDefinition>
-        </Grid.ColumnDefinitions>
-        <ListBox Grid.Column="0" x:Name="MenuHoverHistoryList" ItemsSource="{Binding Path=Items}"></ListBox>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+
+        <WrapPanel Grid.Row="0" VerticalAlignment="Center">
+            <TextBlock Text="Обрабатывать только основные пункты меню: "></TextBlock>
+            <CheckBox x:Name="Checkbox"></CheckBox>
+        </WrapPanel>
+
+        <ListBox Margin="40" Grid.Row="1" x:Name="MenuHoverHistoryList" ItemsSource="{Binding Path=Items}"></ListBox>
     </Grid>
 </Window>

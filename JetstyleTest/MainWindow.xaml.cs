@@ -16,21 +16,21 @@ namespace JetstyleTest
     public partial class MainWindow : Window
     {
         private SpeechHelper speechHelper = new SpeechHelper();
-        private string appName = "notepad";
         private AutomationElement previouslyFocusedMenuItem;
-        delegate void NotepadLaunchHandler(Process process);
+        private HashSet<string> targetElementsNames;
+        private delegate void NotepadLaunchHandler(Process process);
         private AutomationElement focusedWindow;
         public ObservableCollection<string> Items { get; set; }
 
-       
 
-        //mousehook causes perf problems
         public MainWindow()
         {
             InitializeComponent();
             DataContext = this;
             Items = new ObservableCollection<string>();
             MenuHoverHistoryList.ItemsSource = Items;
+
+            AddCheckboxListeners();
 
             Closed += (o, e) =>
             {
@@ -41,13 +41,19 @@ namespace JetstyleTest
             Automation.AddAutomationFocusChangedEventHandler(OnFocusChanged);
         }
 
-        private void CreateMouseHook()
+        private void AddCheckboxListeners()
         {
-            mouseProcess = HookCallback;
-            hookId =
-                SetHook(mouseProcess);
-        }
+            Checkbox.Checked += (o, e) =>
+            {
+                targetElementsNames = Constants.NotepadMainMenuItemNames;
+            };
 
+            Checkbox.Unchecked += (o, e) =>
+            {
+                targetElementsNames = null;
+            };
+        }
+        
         private void OnMousePositionChanged(Point point)
         { 
             try
@@ -55,16 +61,29 @@ namespace JetstyleTest
                 var element = AutomationElement.FromPoint(point);
 
                 if (element != null)
-                {
-                    
+                { 
                     try
                     {
                         if (element != null && element != previouslyFocusedMenuItem && focusedWindow.Current.BoundingRectangle.Contains(point))
                         {
-                            App.Current.Dispatcher.Invoke(() => { Items.Add(element.Current.Name); });
-                            speechHelper.Speak(element.Current.Name);
+                            if (targetElementsNames != null)
+                            {
+                                if (targetElementsNames.Contains(element.Current.Name))
+                                {
+                                    App.Current.Dispatcher.Invoke(() => { Items.Add(element.Current.Name); });
+                                    speechHelper.Speak(element.Current.Name);
 
-                            previouslyFocusedMenuItem = element;
+                                    previouslyFocusedMenuItem = element;
+                                }
+                            }
+                            else
+                            {
+                                App.Current.Dispatcher.Invoke(() => { Items.Add(element.Current.Name); });
+                                speechHelper.Speak(element.Current.Name);
+
+                                previouslyFocusedMenuItem = element;
+                            }
+                            
                         }
                     }
                     catch (ElementNotAvailableException)
@@ -90,7 +109,7 @@ namespace JetstyleTest
                 {
                     focusedWindow = parentWindow;
 
-                    if (AutomationHelper.UIAelementIsRequiredProcessWindow(focusedWindow, appName))
+                    if (AutomationHelper.UIAelementIsRequiredProcessWindow(focusedWindow, Constants.appName))
                     {                        
                         MousePositionChanged += OnMousePositionChanged;
                     }                       
