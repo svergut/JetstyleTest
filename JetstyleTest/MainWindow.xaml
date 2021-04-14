@@ -8,15 +8,18 @@
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="0.2*"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="0.2*"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <WrapPanel Grid.Row="0" VerticalAlignment="Center">
-            <TextBlock Text="Обрабатывать только основные пункты меню: "></TextBlock>
-            <CheckBox x:Name="Checkbox"></CheckBox>
-        </WrapPanel>
+        <TextBlock Grid.Row="0" VerticalAlignment="Center" Text="История перемещений курсора" FontWeight="Regular" FontSize="24" HorizontalAlignment="Center"></TextBlock>
 
-        <ListBox Margin="40" Grid.Row="1" x:Name="MenuHoverHistoryList" ItemsSource="{Binding Path=Items}"></ListBox>
+        <ListBox Margin="40 0 40 0" Grid.Row="1" x:Name="MenuHoverHistoryList" ItemsSource="{Binding Path=Items}"></ListBox>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Center">
+            <TextBlock VerticalAlignment="Center" Text="Обрабатывать только основные пункты меню"></TextBlock>
+            <CheckBox VerticalAlignment="Center" x:Name="Checkbox" Margin="10 0 0 0"></CheckBox>
+        </StackPanel>
     </Grid>
 </Window>

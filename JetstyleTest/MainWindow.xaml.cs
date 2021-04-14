@@ -2,17 +2,12 @@
 using System.Windows;
 using System.Windows.Automation;
 using System.Diagnostics;
-using System.Speech.Synthesis;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace JetstyleTest
 {
-    /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
-    /// </summary>
+
     public partial class MainWindow : Window
     {
         private SpeechHelper speechHelper = new SpeechHelper();
@@ -53,6 +48,14 @@ namespace JetstyleTest
                 targetElementsNames = null;
             };
         }
+
+        private void HandleHoveredElement(AutomationElement element)
+        {
+            App.Current.Dispatcher.Invoke(() => { Items.Add(element.Current.Name); });
+            speechHelper.Speak(element.Current.Name);
+
+            previouslyFocusedMenuItem = element;
+        }  
         
         private void OnMousePositionChanged(Point point)
         { 
@@ -60,37 +63,19 @@ namespace JetstyleTest
             {
                 var element = AutomationElement.FromPoint(point);
 
-                if (element != null)
-                { 
-                    try
-                    {
-                        if (element != null && element != previouslyFocusedMenuItem && focusedWindow.Current.BoundingRectangle.Contains(point))
-                        {
-                            if (targetElementsNames != null)
-                            {
-                                if (targetElementsNames.Contains(element.Current.Name))
-                                {
-                                    App.Current.Dispatcher.Invoke(() => { Items.Add(element.Current.Name); });
-                                    speechHelper.Speak(element.Current.Name);
+                if (element == null)
+                    return;
 
-                                    previouslyFocusedMenuItem = element;
-                                }
-                            }
-                            else
-                            {
-                                App.Current.Dispatcher.Invoke(() => { Items.Add(element.Current.Name); });
-                                speechHelper.Speak(element.Current.Name);
+                if (element != previouslyFocusedMenuItem && focusedWindow.Current.BoundingRectangle.Contains(point))
+                {
+                    var elementMustBeHandled = true;
 
-                                previouslyFocusedMenuItem = element;
-                            }
-                            
-                        }
-                    }
-                    catch (ElementNotAvailableException)
-                    {
-                        Console.WriteLine("Automation framework error has occured");
-                    }
-                }
+                    if (targetElementsNames != null && !targetElementsNames.Contains(element.Current.Name))
+                        elementMustBeHandled = false;
+
+                    if (elementMustBeHandled)
+                        HandleHoveredElement(element);
+                }                
 
                 element = null;
             }
@@ -102,47 +87,23 @@ namespace JetstyleTest
             try
             {
                 var focusedElement = sender as AutomationElement;
-              
+
+                if (focusedElement == null)
+                    return;
+
                 var parentWindow = AutomationHelper.GetParentWindow(focusedElement);
 
                 if (parentWindow != focusedWindow)
                 {
                     focusedWindow = parentWindow;
 
-                    if (AutomationHelper.UIAelementIsRequiredProcessWindow(focusedWindow, Constants.appName))
-                    {                        
-                        MousePositionChanged += OnMousePositionChanged;
-                    }                       
+                    if (AutomationHelper.UIAelementIsRequiredProcessWindow(focusedWindow, Constants.appName))                   
+                        MousePositionChanged += OnMousePositionChanged;         
                     else
-                    {
                         MousePositionChanged -= OnMousePositionChanged;
-                    }
-                        
-
                 }
             }
             catch (ElementNotAvailableException) { }
-        }
-        
-        private void HandleAutomationFocusChange(object o, AutomationFocusChangedEventArgs e)
-        {
-            var speechSynthesizer = new SpeechSynthesizer();
-            speechSynthesizer.Rate = 4;
-
-            try
-            {
-                var element = o as AutomationElement;
-
-                if (element != null)
-                {
-                    speechSynthesizer.SpeakAsyncCancelAll();
-                    speechSynthesizer.Speak(new Prompt(element.Current.Name));
-                }
-            }
-            catch (ElementNotAvailableException)
-            {
-                Console.WriteLine("Automation framework error has occured");
-            }
-        }
+        }                
     }
 }

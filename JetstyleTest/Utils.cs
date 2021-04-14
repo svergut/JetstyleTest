@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace JetstyleTest
 {
@@ -11,9 +7,4 @@ namespace JetstyleTest
         public static string appName = "notepad";
         public static readonly HashSet<string> NotepadMainMenuItemNames = new HashSet<string>() { "Файл", "Правка", "Формат", "Вид", "Справка" };
     }   
-
-    class Utils
-    {
-
-    }
 }
